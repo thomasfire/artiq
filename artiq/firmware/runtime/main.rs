@@ -37,9 +37,9 @@ use urc::Urc;
 use board_misoc::{csr, ident, clock, spiflash, config, net_settings, pmp, boot};
 #[cfg(has_ethmac)]
 use board_misoc::ethmac;
+use board_misoc::net_settings::{Ipv4AddrConfig, InterfaceBuilderEx};
 #[cfg(soc_platform = "kasli")]
 use board_misoc::irq;
-use board_misoc::net_settings::{Ipv4AddrConfig};
 #[cfg(has_drtio)]
 use board_artiq::drtioaux;
 use board_artiq::drtio_routing;
@@ -53,8 +53,6 @@ use board_artiq::drtio_eem;
 use proto_artiq::analyzer_proto;
 
 use riscv::register::{mcause, mepc, mtval};
-use smoltcp::iface::Routes;
-use ip_addr_storage::InterfaceBuilderEx;
 
 mod rtio_clocking;
 mod rtio_mgt;
@@ -73,7 +71,6 @@ mod moninj;
 #[cfg(has_rtio_analyzer)]
 mod analyzer;
 mod dhcp;
-mod ip_addr_storage;
 
 #[cfg(has_grabber)]
 fn grabber_thread(io: sched::Io) {
@@ -166,22 +163,11 @@ fn startup() {
     } else {
         false
     };
-    let mut interface = smoltcp::iface::InterfaceBuilder::new(net_device, vec![])
+    let interface = smoltcp::iface::InterfaceBuilder::new(net_device, vec![])
         .hardware_addr(HardwareAddress::Ethernet(net_addresses.hardware_addr))
         .init_ip_addrs(&net_addresses)
         .neighbor_cache(neighbor_cache)
-        .routes(Routes::new(BTreeMap::new()))
         .finalize();
-
-    if !use_dhcp {
-        if let Some(ipv4_default_route) = net_addresses.ipv4_default_route {
-            interface.routes_mut().add_default_ipv4_route(ipv4_default_route).unwrap();
-        }
-    }
-
-    if let Some(ipv6_default_route) = net_addresses.ipv6_default_route {
-        interface.routes_mut().add_default_ipv6_route(ipv6_default_route).unwrap();
-    }
 
     #[cfg(has_drtio)]
     let drtio_routing_table = urc::Urc::new(RefCell::new(
