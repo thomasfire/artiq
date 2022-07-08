@@ -150,7 +150,6 @@ pub fn thread(io: Io, restart_idle: &Urc<Cell<bool>>) {
                 Err(Error::Io(IoError::UnexpectedEnd)) => (),
                 Err(err) => error!("aborted: {}", err)
             }
-            stream.close().expect("mgmt: close socket");
         });
     }
 }

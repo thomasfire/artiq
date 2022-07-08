@@ -319,7 +319,7 @@ fn process_flash_kernel(io: &Io, _aux_mutex: &Mutex, _subkernel_mutex: &Mutex, _
         }
     } else {
         #[cfg(has_drtio)]
-        {  
+        {
             let archive = TarArchiveRef::new(kernel);
             let entries = archive.entries();
             let mut main_lib: Option<&[u8]> = None;
@@ -706,7 +706,7 @@ fn process_kern_message(io: &Io, aux_mutex: &Mutex,
                     let res = subkernel::retrieve_finish_status(io, aux_mutex, ddma_mutex, subkernel_mutex,
                         routing_table, id as u32)?;
                     if res.comm_lost {
-                        kern_send(io, 
+                        kern_send(io,
                             &kern::SubkernelError(kern::SubkernelStatus::CommLost))?;
                     } else if let Some(raw_exception) = &res.exception {
                         let exception = subkernel::read_exception(raw_exception);
@@ -863,10 +863,10 @@ fn flash_kernel_worker(io: &Io, aux_mutex: &Mutex,
         if !rpc_queue::empty() {
             unexpected!("unexpected background RPC in flash kernel")
         }
-        
+
         if let Some(r_idle) = restart_idle {
             if r_idle.get() {
-                return Err(Error::KernelNotFound) 
+                return Err(Error::KernelNotFound)
             }
         }
 
@@ -914,7 +914,7 @@ pub fn thread(io: Io, aux_mutex: &Mutex,
         let routing_table = routing_table.borrow();
         let mut congress = congress.borrow_mut();
         info!("running startup kernel");
-        match flash_kernel_worker(&io, &aux_mutex, &routing_table, &up_destinations, 
+        match flash_kernel_worker(&io, &aux_mutex, &routing_table, &up_destinations,
                 ddma_mutex, subkernel_mutex, &mut congress, "startup_kernel", None) {
             Ok(()) =>
                 info!("startup kernel finished"),
@@ -962,7 +962,7 @@ pub fn thread(io: Io, aux_mutex: &Mutex,
                 let routing_table = routing_table.borrow();
                 let mut congress = congress.borrow_mut();
                 let mut stream = TcpStream::from_handle(&io, stream);
-                match host_kernel_worker(&io, &aux_mutex, &routing_table, &up_destinations, 
+                match host_kernel_worker(&io, &aux_mutex, &routing_table, &up_destinations,
                         &ddma_mutex, &subkernel_mutex, &mut stream, &mut *congress) {
                     Ok(()) => (),
                     Err(Error::Protocol(host::Error::Io(IoError::UnexpectedEnd))) =>
@@ -980,13 +980,6 @@ pub fn thread(io: Io, aux_mutex: &Mutex,
                         drtio::clear_buffers(&io, &aux_mutex);
                     }
                 }
-                loop {
-                    match stream.close() {
-                        Ok(_) => break,
-                        Err(SchedError::Interrupted) => (),
-                        Err(e) => panic!("session: close socket: {:?}", e)
-                    };
-                }
             });
         }
 
@@ -1003,7 +996,7 @@ pub fn thread(io: Io, aux_mutex: &Mutex,
             respawn(&io, &mut kernel_thread, move |io| {
                 let routing_table = routing_table.borrow();
                 let mut congress = congress.borrow_mut();
-                match flash_kernel_worker(&io, &aux_mutex, &routing_table, &up_destinations, 
+                match flash_kernel_worker(&io, &aux_mutex, &routing_table, &up_destinations,
                     &ddma_mutex, &subkernel_mutex, &mut *congress, "idle_kernel", Some(&restart_idle)) {
                     Ok(()) =>
                         info!("idle kernel finished, standing by"),
