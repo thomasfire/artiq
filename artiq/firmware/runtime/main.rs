@@ -37,7 +37,7 @@ use urc::Urc;
 use board_misoc::{csr, ident, clock, spiflash, config, net_settings, pmp, boot};
 #[cfg(has_ethmac)]
 use board_misoc::ethmac;
-use board_misoc::net_settings::{NetAddresses, Ipv4AddrConfig};
+use board_misoc::net_settings::{NetAddresses, USE_DHCP};
 #[cfg(soc_platform = "kasli")]
 use board_misoc::irq;
 #[cfg(has_drtio)]
@@ -111,9 +111,7 @@ pub fn get_ip_addrs(net_addresses: &NetAddresses) -> [IpCidr; IP_ADDRESS_STORAGE
     let mut storage = [
         IpCidr::new(IpAddress::Ipv4(Ipv4Address::UNSPECIFIED), 0);  IP_ADDRESS_STORAGE_SIZE
     ];
-    if let Ipv4AddrConfig::Static(ipv4) = net_addresses.ipv4_addr {
-        storage[IPV4_INDEX] = IpCidr::new(IpAddress::Ipv4(ipv4), 0);
-    }
+    storage[IPV4_INDEX] = IpCidr::new(net_addresses.ipv4_addr, 0);
     storage[IPV6_LL_INDEX] = IpCidr::new(net_addresses.ipv6_ll_addr, 0);
     if let Some(ipv6) = net_addresses.ipv6_addr {
         storage[IPV6_INDEX] = IpCidr::new(ipv6, 0);
@@ -178,7 +176,7 @@ fn startup() {
         smoltcp::iface::NeighborCache::new(alloc::collections::btree_map::BTreeMap::new());
     let net_addresses = net_settings::get_adresses();
     info!("network addresses: {}", net_addresses);
-    let use_dhcp = if matches!(net_addresses.ipv4_addr, Ipv4AddrConfig::UseDhcp) {
+    let use_dhcp = if net_addresses.ipv4_addr == USE_DHCP {
         info!("Will try to acquire an IPv4 address with DHCP");
         true
     } else {
