@@ -7,6 +7,7 @@ ARTIQ-9 (Unreleased)
 --------------------
 
 * Zadig Driver Installer was added to the MSYS2 offline installer.
+* HDF5 attributes can be attached to datasets using ``set_dataset_metadata()``.
 
 ARTIQ-8
 -------
@@ -49,7 +50,7 @@ Highlights:
    - Hotkeys now organize experiment windows in the order they were last interacted with:
       + CTRL+SHIFT+T tiles experiment windows
       + CTRL+SHIFT+C cascades experiment windows
-   - By enabling the ``quickstyle`` option, ``EnumerationValue`` entry widgets can now alternatively display 
+   - By enabling the ``quickstyle`` option, ``EnumerationValue`` entry widgets can now alternatively display
      its choices as buttons that submit the experiment on click.
 * Datasets can now be associated with units and scale factors, and displayed accordingly in the dashboard
   including applets, like widgets such as ``NumberValue`` already did in earlier ARTIQ versions.
@@ -92,7 +93,7 @@ Accesses to the data argument should be replaced as below:
   data[key][0] ==> persist[key]
   data[key][1] ==> value[key]
 
-* The ``ndecimals`` parameter in ``NumberValue`` and ``Scannable`` has been renamed to ``precision``. 
+* The ``ndecimals`` parameter in ``NumberValue`` and ``Scannable`` has been renamed to ``precision``.
   Parameters after and including ``scale`` in both constructors are now keyword-only.
   Refer to the updated ``no_hardware/arguments_demo.py`` example for current usage.
 * Almazny v1.2 is incompatible with the legacy versions and is the default.
