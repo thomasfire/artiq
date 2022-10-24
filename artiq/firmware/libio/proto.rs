@@ -156,6 +156,8 @@ impl<T> ProtoWrite for T where T: Write + ?Sized {
     type WriteError = IoError<T::WriteError>;
 
     fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::WriteError> {
+        #[cfg(feature = "log")]
+        info!("{:?}", buf);
         T::write_all(self, buf)
     }
 }

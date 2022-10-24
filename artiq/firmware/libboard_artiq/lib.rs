@@ -20,6 +20,8 @@ pub mod mailbox;
 #[cfg(has_kernel_cpu)]
 pub mod rpc_queue;
 
+//pub mod rpc_fifo;
+
 #[cfg(has_si5324)]
 pub mod si5324;
 #[cfg(has_wrpll)]

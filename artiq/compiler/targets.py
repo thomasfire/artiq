@@ -152,6 +152,7 @@ class Target:
               lambda: "\n".join(fn.as_entity(type_printer) for fn in module.artiq_ir))
 
         llmod = module.build_llvm_ir(self)
+        print(llmod)
 
         try:
             llparsedmod = llvm.parse_assembly(str(llmod))

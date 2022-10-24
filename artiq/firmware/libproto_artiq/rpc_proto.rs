@@ -4,16 +4,21 @@ use cslice::{CSlice, CMutSlice};
 use byteorder::{NativeEndian, ByteOrder};
 use io::{ProtoRead, Read, Write, ProtoWrite, Error};
 use self::tag::{Tag, TagIterator, split_tag};
+use unwind_backtrace;
 
 #[inline]
 fn alignment_offset(alignment: isize, ptr: isize) -> isize {
-    (-ptr).rem_euclid(alignment)
+    (alignment - ptr % alignment) % alignment
 }
 
 unsafe fn align_ptr<T>(ptr: *const ()) -> *const T {
     let alignment = core::mem::align_of::<T>() as isize;
-    let fix = alignment_offset(alignment as isize, ptr as isize);
+    let fix = alignment_offset(alignment, ptr as isize);
     ((ptr as isize) + fix) as *const T
+
+    /*
+
+    */
 }
 
 unsafe fn align_ptr_mut<T>(ptr: *mut ()) -> *mut T {
@@ -52,9 +57,16 @@ unsafe fn recv_value<R, E>(reader: &mut R, tag: Tag, data: &mut *mut (),
             }),
         Tag::String | Tag::Bytes | Tag::ByteArray => {
             consume_value!(CMutSlice<u8>, |ptr| {
+                /*
+                let length = proto_async::read_i32(stream).await? as usize;
+                *ptr = CMutSlice::new(alloc(length).await as *mut u8, length);
+                proto_async::read_chunk(stream, (*ptr).as_mut()).await?;
+                Ok(())
+                */
                 let length = reader.read_u32()? as usize;
                 *ptr = CMutSlice::new(alloc(length)? as *mut u8, length);
                 reader.read_exact((*ptr).as_mut())?;
+                info!("recv_value: {:?}", (*ptr).as_ref());
                 Ok(())
             })
         }
@@ -170,7 +182,7 @@ pub fn recv_return<R, E>(reader: &mut R, tag_bytes: &[u8], data: *mut (),
           E: From<Error<R::ReadError>>
 {
     let mut it = TagIterator::new(tag_bytes);
-    #[cfg(feature = "log")]
+
     debug!("recv ...->{}", it);
 
     let tag = it.next().expect("truncated tag");
@@ -204,12 +216,36 @@ unsafe fn send_value<W>(writer: &mut W, tag: Tag, data: &mut *const ())
         Tag::Int64 | Tag::Float64 =>
             consume_value!(u64, |ptr|
                 writer.write_u64(*ptr)),
-        Tag::String =>
+        Tag::String => {
+
+            unwind_backtrace::backtrace(|x: usize| {
+                info!("Send s bt: {:#x}", x);
+            });
             consume_value!(CSlice<u8>, |ptr|
-                writer.write_string(str::from_utf8((*ptr).as_ref()).unwrap())),
-        Tag::Bytes | Tag::ByteArray =>
+                { // TODO investigate smth calls it twice
+
+                    info!("Send s: {:?}", (*ptr).as_ref());
+                    let buf_str = str::from_utf8_unchecked((*ptr).as_ref());//.unwrap_or("corrupted string");
+                    writer.write_string(buf_str)
+                })
+        },
+        Tag::Bytes | Tag::ByteArray => {
+            //info!("RPC send {:?}", data);
+
+            unwind_backtrace::backtrace(|x: usize| {
+                info!("Send b bt: {:#x}", x);
+            });
+
             consume_value!(CSlice<u8>, |ptr|
-                writer.write_bytes((*ptr).as_ref())),
+                {
+                    let buf_bytes = (*ptr).as_ref().clone();
+
+                    info!("Send b: {:?}", buf_bytes);
+                   // unsafe {info!("RPC send bytes {:?}", );}
+
+                    writer.write_bytes(buf_bytes)
+                })
+        },
         Tag::Tuple(it, arity) => {
             let mut it = it.clone();
             writer.write_u8(arity)?;
@@ -326,7 +362,7 @@ pub fn send_args<W>(writer: &mut W, service: u32, tag_bytes: &[u8], data: *const
     let (arg_tags_bytes, return_tag_bytes) = split_tag(tag_bytes);
 
     let mut args_it = TagIterator::new(arg_tags_bytes);
-    #[cfg(feature = "log")]
+   // #[cfg(feature = "log")]
     {
         let return_it = TagIterator::new(return_tag_bytes);
         debug!("send<{}>({})->{}", service, args_it, return_it);

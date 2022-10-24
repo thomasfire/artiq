@@ -1,6 +1,6 @@
 use core::str::Utf8Error;
 use alloc::{vec::Vec, string::String};
-#[cfg(feature = "log")]
+
 use log;
 
 use io::{Read, ProtoRead, Write, ProtoWrite, Error as IoError, ReadStringError};
@@ -53,9 +53,9 @@ pub enum Request {
     GetLog,
     ClearLog,
     PullLog,
-    #[cfg(feature = "log")]
+
     SetLogFilter(log::LevelFilter),
-    #[cfg(feature = "log")]
+
     SetUartLogFilter(log::LevelFilter),
 
     ConfigRead   { key: String },
@@ -84,7 +84,7 @@ impl Request {
     pub fn read_from<R>(reader: &mut R) -> Result<Self, Error<R::ReadError>>
         where R: Read + ?Sized
     {
-        #[cfg(feature = "log")]
+
         fn read_log_level_filter<T: Read + ?Sized>(reader: &mut T) ->
                 Result<log::LevelFilter, Error<T::ReadError>> {
             Ok(match reader.read_u8()? {
@@ -102,9 +102,9 @@ impl Request {
             1  => Request::GetLog,
             2  => Request::ClearLog,
             7  => Request::PullLog,
-            #[cfg(feature = "log")]
+
             3 => Request::SetLogFilter(read_log_level_filter(reader)?),
-            #[cfg(feature = "log")]
+
             6 => Request::SetUartLogFilter(read_log_level_filter(reader)?),
 
             12 => Request::ConfigRead {

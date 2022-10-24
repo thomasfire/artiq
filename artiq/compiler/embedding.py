@@ -69,6 +69,7 @@ class EmbeddingMap:
             assert exn_id == i
 
     def store_str(self, s):
+        print("store str ", s)
         if s in self.str_forward_map:
             return self.str_forward_map[s]
         str_id = len(self.str_forward_map)
@@ -77,6 +78,7 @@ class EmbeddingMap:
         return str_id
 
     def retrieve_str(self, str_id):
+        print("retrieve_str ", str_id)
         return self.str_reverse_map[str_id]
 
     # Modules

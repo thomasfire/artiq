@@ -12,10 +12,11 @@ failure = { version = "0.1", default-features = false }
 failure_derive = { version = "0.1", default-features = false }
 byteorder = { version = "1.0", default-features = false }
 cslice = { version = "0.3" }
-log = { version = "0.4", default-features = false, optional = true }
-io = { path = "../libio", features = ["byteorder"] }
+log = { version = "0.4", default-features = false }
+io = { path = "../libio", features = ["byteorder", "log"] }
 dyld = { path = "../libdyld" }
 eh = { path = "../libeh" }
+unwind_backtrace = { path = "../libunwind_backtrace" }
 
 [features]
 alloc = ["io/alloc"]

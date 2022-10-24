@@ -10,6 +10,10 @@ extern crate alloc;
 #[cfg(feature = "byteorder")]
 extern crate byteorder;
 
+#[cfg(feature = "log")]
+#[macro_use]
+extern crate log;
+
 mod cursor;
 #[cfg(feature = "byteorder")]
 mod proto;
@@ -77,7 +81,11 @@ pub trait Write {
 
     /// Attempts to write an entire buffer into `self`.
     fn write_all(&mut self, mut buf: &[u8]) -> Result<(), Error<Self::WriteError>> {
+        #[cfg(feature = "log")]
+        info!("write_all {:?}", buf);
         while buf.len() > 0 {
+            #[cfg(feature = "log")]
+            info!("write_all buf {:?}", buf);
             let written_bytes = self.write(buf)?;
             if written_bytes == 0 {
                 return Err(Error::UnexpectedEnd)
@@ -101,6 +109,9 @@ impl<'a, T: Write> Write for &'a mut T {
     type FlushError = T::FlushError;
 
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+        #[cfg(feature = "log")]
+        info!("&'a mut T {:?}", buf);
+
         T::write(self, buf)
     }
 
@@ -118,8 +129,12 @@ impl<'a> Write for &'a mut [u8] {
     type FlushError = !;
 
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+        #[cfg(feature = "log")]
+        info!("&'a mut [u8] {:?}", buf);
         let len = buf.len().min(self.len());
         self[..len].copy_from_slice(&buf[..len]);
+        #[cfg(feature = "log")]
+        info!("result buf {:?}", &self);
         Ok(len)
     }
 
@@ -135,6 +150,8 @@ impl<'a> Write for alloc::vec::Vec<u8> {
     type FlushError = !;
 
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+        #[cfg(feature = "log")]
+        info!("alloc::vec::Vec<u8> {:?}", buf);
         self.extend_from_slice(buf);
         Ok(buf.len())
     }

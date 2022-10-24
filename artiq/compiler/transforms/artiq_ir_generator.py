@@ -2516,6 +2516,7 @@ class ARTIQIRGenerator(algorithm.Visitor):
             self.engine.process(diag)
 
     def _user_call(self, callee, positional, keywords, arg_exprs={}):
+        print("user_call is rpc", types.is_rpc(callee.type))
         if types.is_function(callee.type) or types.is_rpc(callee.type):
             func     = callee
             self_arg = None

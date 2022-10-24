@@ -6,7 +6,7 @@ extern crate failure_derive;
 #[cfg(feature = "alloc")]
 extern crate alloc;
 extern crate cslice;
-#[cfg(feature = "log")]
+
 #[macro_use]
 extern crate log;
 
@@ -14,6 +14,7 @@ extern crate byteorder;
 extern crate io;
 extern crate dyld;
 extern crate eh;
+extern crate unwind_backtrace;
 
 // Internal protocols.
 pub mod kernel_proto;

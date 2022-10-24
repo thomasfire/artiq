@@ -198,6 +198,7 @@ impl<'a> Library<'a> {
 
     fn resolve_rela(&self, relas: &[Elf32_Rela], resolve: &dyn Fn(&[u8]) -> Option<Elf32_Word>)
             -> Result<(), Error<'a>> {
+        //println!("resolve_rela");
         for rela in relas {
             let sym;
             if ELF32_R_SYM(rela.r_info) == 0 {

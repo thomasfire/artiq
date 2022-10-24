@@ -260,6 +260,7 @@ fn process_host_message(io: &Io,
             },
 
         host::Request::RpcReply { tag } => {
+            info!("process_host_message RpcReply: {:?}", tag);
             if session.kernel_state != KernelState::RpcWait {
                 unexpected!("unsolicited RPC reply")
             }
@@ -271,7 +272,7 @@ fn process_host_message(io: &Io,
                         "expected root value slot from kernel CPU, not {:?}", other)
                 }
             })?;
-            rpc::recv_return(stream, &tag, slot, &|size| -> Result<_, Error<SchedError>> {
+            rpc::recv_return(stream, &tag, slot, &|size| -> Result<_, Error<SchedError>> { // TODO check
                 if size == 0 {
                     // Don't try to allocate zero-length values, as RpcRecvReply(0) is
                     // used to terminate the kernel-side receive loop.
@@ -332,6 +333,7 @@ fn process_kern_message(io: &Io, aux_mutex: &Mutex,
                         mut stream: Option<&mut TcpStream>,
                         session: &mut Session) -> Result<bool, Error<SchedError>> {
     kern_recv_notrace(io, |request| {
+        info!("kern_recv_notrace req: {:?}", request);
         match (request, session.kernel_state) {
             (&kern::LoadReply(_), KernelState::Loaded) |
             (&kern::RpcRecvRequest(_), KernelState::RpcWait) => {
@@ -394,10 +396,12 @@ fn process_kern_message(io: &Io, aux_mutex: &Mutex,
             }
 
             &kern::RpcSend { async, service, tag, data } => {
+                    info!("process_kern_message RpcSend");
                 match stream {
                     None => unexpected!("unexpected RPC in flash kernel"),
                     Some(ref mut stream) => {
                         host_write(stream, host::Reply::RpcRequest { async: async })?;
+                        unsafe {info!("kern::RpcSend {} {:?} {:?}", service, tag, (*data).as_ref());}
                         rpc::send_args(stream, service, tag, data)?;
                         if !async {
                             session.kernel_state = KernelState::RpcWait
@@ -475,11 +479,14 @@ fn process_kern_message(io: &Io, aux_mutex: &Mutex,
 
 fn process_kern_queued_rpc(stream: &mut TcpStream,
                            _session: &mut Session) -> Result<(), Error<SchedError>> {
+    unwind_backtrace::backtrace(|x: usize| {
+        info!("process_kern_queued_rpc bt: {:#x}", x);
+    });
     rpc_queue::dequeue(|slice| {
         debug!("comm<-kern (async RPC)");
         let length = NativeEndian::read_u32(slice) as usize;
         host_write(stream, host::Reply::RpcRequest { async: true })?;
-        debug!("{:?}", &slice[4..][..length]);
+        info!("process_kern_queued_rpc dequeue {:?}", &slice[4..][..length]);
         stream.write_all(&slice[4..][..length])?;
         Ok(())
     })

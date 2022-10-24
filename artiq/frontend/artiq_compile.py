@@ -54,21 +54,25 @@ def main():
         argument_mgr = ProcessArgumentManager(arguments)
         exp_inst = exp((device_mgr, dataset_mgr, argument_mgr, {}))
 
-        if not hasattr(exp.run, "artiq_embedded"):
-            raise ValueError("Experiment entry point must be a kernel")
-        core_name = exp.run.artiq_embedded.core_name
+        #if not hasattr(exp.run, "artiq_embedded"):
+        #    raise ValueError("Experiment entry point must be a kernel")
+        try:
+            core_name = exp.run.artiq_embedded.core_name
+        except:
+            core_name = "core"
         core = getattr(exp_inst, core_name)
 
         object_map, kernel_library, _, _ = \
             core.compile(exp.run, [exp_inst], {},
                          attribute_writeback=False, print_as_rpc=False)
     except CompileError as error:
+        print(error)
         return
     finally:
         device_mgr.close_devices()
 
-    if object_map.has_rpc():
-        raise ValueError("Experiment must not use RPC")
+    #if object_map.has_rpc():
+    #    raise ValueError("Experiment must not use RPC")
 
     output = args.output
     if output is None:

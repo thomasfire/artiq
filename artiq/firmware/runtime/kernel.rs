@@ -2,6 +2,7 @@ use core::ptr;
 use board_misoc::csr;
 use mailbox;
 use rpc_queue;
+//use rpc_fifo;
 
 use kernel_proto::{KERNELCPU_EXEC_ADDRESS, KERNELCPU_LAST_ADDRESS, KSUPPORT_HEADER_SIZE};
 
@@ -26,6 +27,7 @@ pub unsafe fn start() {
     csr::kernel_cpu::reset_write(0);
 
     rpc_queue::init();
+    //rpc_fifo::init();
 }
 
 #[cfg(not(has_kernel_cpu))]
@@ -39,6 +41,7 @@ pub unsafe fn stop() {
 
     mailbox::acknowledge();
     rpc_queue::init();
+    //rpc_fifo::init();
 }
 
 pub fn validate(ptr: usize) -> bool {

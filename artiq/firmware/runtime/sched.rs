@@ -17,6 +17,8 @@ use urc::Urc;
 use board_misoc::ethmac::EthernetDevice;
 use smoltcp::phy::Tracer;
 use ip_addr_storage::InterfaceEx;
+use board_artiq::rpc_queue;
+use unwind_backtrace;
 
 #[derive(Fail, Debug)]
 pub enum Error {
@@ -536,7 +538,13 @@ impl<'a> Write for TcpStream<'a> {
 
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
         // Only borrow the underlying socket for the span of the next statement.
+        if (buf.len() >= 8) {
+            unwind_backtrace::backtrace(|x: usize| {
+                info!("TcpStream write bt: {:#x}", x);
+            });
+        }
         let result = self.with_lower(|s| s.send_slice(buf));
+        info!("TcpStream write: {:?}, result: {:?}", buf, result);
         match result {
             // Slow path: we need to block until buffer is non-full.
             Ok(0) => {

@@ -4,6 +4,7 @@
 
 import argparse
 import sys
+import os
 from operator import itemgetter
 import logging
 from collections import defaultdict
@@ -56,6 +57,9 @@ class FileRunner(EnvExperiment):
 
     def run(self):
         kernel_library = self.compile()
+        with open("cache.elf", "wb") as f:
+            print(os.getcwd())
+            f.write(kernel_library)
 
         self.core.comm.load(kernel_library)
         self.core.comm.run()
@@ -198,6 +202,7 @@ def run(with_file=False):
     dataset_mgr = DatasetManager(dataset_db)
 
     try:
+        print("_build_experiment")
         exp_inst = _build_experiment(device_mgr, dataset_mgr, args)
         exp_inst.prepare()
         exp_inst.run()

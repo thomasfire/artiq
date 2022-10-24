@@ -55,6 +55,9 @@ impl<'a> Write for Cursor<&'a mut [u8]> {
     type FlushError = !;
 
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+       // #[cfg(feature = "log")]
+        info!("Cursor<&'a mut [u8]> {:?}", buf);
+
         let data = &mut self.inner[self.pos..];
         let len  = buf.len().min(data.len());
         data[..len].copy_from_slice(&buf[..len]);
@@ -75,6 +78,9 @@ impl Write for Cursor<::alloc::vec::Vec<u8>> {
 
     #[inline]
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+        #[cfg(feature = "log")]
+        info!("Cursor<::alloc::vec::Vec<u8>> {:?}", buf);
+
         self.inner.extend_from_slice(buf);
         Ok(buf.len())
     }

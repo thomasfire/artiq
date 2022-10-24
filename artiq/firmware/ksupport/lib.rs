@@ -135,13 +135,20 @@ extern fn rpc_send(service: u32, tag: &CSlice<u8>, data: *const *const ()) {
 
 #[unwind(aborts)]
 extern fn rpc_send_async(service: u32, tag: &CSlice<u8>, data: *const *const ()) {
+    // here goes corrupted data
     while rpc_queue::full() {}
+    println!("rpc_send_async");
     rpc_queue::enqueue(|mut slice| {
         let length = {
             let mut writer = Cursor::new(&mut slice[4..]);
             rpc_proto::send_args(&mut writer, service, tag.as_ref(), data)?;
             writer.position()
         };
+        for index in 0..4 {
+            println!("data enqueue {:?}", unsafe{slice::from_raw_parts(*(data.offset(index)) as *const u8, length+20)});
+        }
+        println!("enqueue {:?}", &slice[4..length]);
+        println!("enqueue tag {:?}", tag.as_ref());
         io::ProtoWrite::write_u32(&mut slice, length as u32)
     }).unwrap_or_else(|err| {
         assert!(err == io::Error::UnexpectedEnd);
@@ -445,6 +452,7 @@ unsafe fn attribute_writeback(typeinfo: *const ()) {
                 attributes = attributes.offset(1);
 
                 if (*attribute).tag.len() > 0 {
+                    println!("attribute_writeback if (*attribute).tag.len() > 0");
                     rpc_send_async(0, &(*attribute).tag, [
                         &object as *const _ as *const (),
                         &(*attribute).name as *const _ as *const (),

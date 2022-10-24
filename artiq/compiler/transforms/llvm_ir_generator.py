@@ -335,8 +335,8 @@ class LLVMIRGenerator:
             else:
                 value = const.value
 
-            llptr = self.llstr_of_str(const.value, linkage="private", unnamed_addr=True)
-            lllen = ll.Constant(lli32, len(const.value))
+            llptr = self.llstr_of_str(value, linkage="private", unnamed_addr=True)
+            lllen = ll.Constant(lli32, len(value))
             return ll.Constant(llty, (llptr, lllen))
         else:
             assert False
@@ -1473,6 +1473,12 @@ class LLVMIRGenerator:
             llargptr = self.llbuilder.gep(llargs, [ll.Constant(lli32, index)])
             self.llbuilder.store(llargslot, llargptr)
 
+        print("llvm rpc_send_async", llservice, lltagptr, llargs)
+        for x in args:
+            print(x)
+            print("\n\n")
+
+
         if fun_type.is_async:
             self.llbuilder.call(self.llbuiltin("rpc_send_async"),
                                 [llservice, lltagptr, llargs])
@@ -1481,7 +1487,7 @@ class LLVMIRGenerator:
                                 [llservice, lltagptr, llargs])
 
         # Don't waste stack space on saved arguments.
-        self.llbuilder.call(self.llbuiltin("llvm.stackrestore"), [llstackptr])
+        self.llbuilder.call(self.llbuiltin("llvm.stackrestore"), [llstackptr]) # TODO check
 
         if fun_type.is_async:
             # If this RPC is called using an `invoke` ARTIQ IR instruction, there will be
@@ -1538,6 +1544,7 @@ class LLVMIRGenerator:
         if not fun_type.ret.fold(False, lambda r, t: r or builtins.is_allocated(t)):
             # We didn't allocate anything except the slot for the value itself.
             # Don't waste stack space.
+            print("stackrestore")
             self.llbuilder.call(self.llbuiltin("llvm.stackrestore"), [llstackptr])
         if llnormalblock:
             self.llbuilder.branch(llnormalblock)
@@ -1546,6 +1553,7 @@ class LLVMIRGenerator:
     def process_Call(self, insn):
         functiontyp = insn.target_function().type
         if types.is_rpc(functiontyp):
+            print("process_Call rpc")
             return self._build_rpc(insn.target_function().loc,
                                    functiontyp,
                                    insn.arguments(),
@@ -1582,6 +1590,7 @@ class LLVMIRGenerator:
         llnormalblock = self.map(insn.normal_target())
         llunwindblock = self.map(insn.exception_target())
         if types.is_rpc(functiontyp):
+            print("process_Invoke rpc")
             return self._build_rpc(insn.target_function().loc,
                                    functiontyp,
                                    insn.arguments(),
