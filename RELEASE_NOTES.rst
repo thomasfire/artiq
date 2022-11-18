@@ -3,16 +3,16 @@
 Release notes
 =============
 
-Unreleased
-----------
+ARTIQ-8 (Unreleased)
+--------------------
 
 Highlights:
 
 * Implemented Phaser-servo. This requires recent gateware on Phaser.
 * Implemented Phaser-MIQRO support. This requires the Phaser MIQRO gateware
   variant.
+* MSYS2 packaging for Windows.
 * HDF5 attributes can be attached to datasets using ``set_dataset_metadata()``.
-
 
 ARTIQ-7
 -------

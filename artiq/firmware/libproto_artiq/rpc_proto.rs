@@ -147,7 +147,7 @@ unsafe fn recv_value<R, E>(reader: &mut R, tag: Tag, data: &mut *mut (),
                 let storage_offset = round_up(list_size, tag.alignment());
                 let storage_size = tag.size() * length;
 
-                let allocation = alloc(storage_offset as usize + storage_size)? as *mut u8;
+                let allocation = alloc(storage_offset + storage_size)? as *mut u8;
                 *ptr_to_list = allocation as *mut List;
                 let storage = allocation.offset(storage_offset as isize) as *mut ();
 
@@ -170,7 +170,7 @@ unsafe fn recv_value<R, E>(reader: &mut R, tag: Tag, data: &mut *mut (),
                 // Allocate backing storage for elements; deserialize them.
                 let elt_tag = it.clone().next().expect("truncated tag");
                 *buffer = alloc(elt_tag.size() * total_len)?;
-                recv_elements(reader, tag, total_len, *buffer, alloc)
+                recv_elements(reader, elt_tag, total_len, *buffer, alloc)
             })
         }
         Tag::Range(it) => {
