@@ -6,6 +6,7 @@ import os
 import select
 import sys
 
+from artiq.coredevice.almazny import AlmaznyChannel, AlmaznyLegacy
 from artiq.experiment import *
 from artiq.coredevice.ad9910 import AD9910, SyncDataEeprom
 from artiq.coredevice.phaser import PHASER_GW_BASE, PHASER_GW_MIQRO
@@ -60,7 +61,8 @@ class SinaraTester(EnvExperiment):
         self.mirnies = dict()
         self.suservos = dict()
         self.suschannels = dict()
-        self.almaznys = dict()
+        self.almaznys: dict[str, AlmaznyLegacy] = dict()
+        self.almaznychannels: dict[str, AlmaznyChannel] = dict()
 
         ddb = self.get_device_db()
         for name, desc in ddb.items():
@@ -100,6 +102,8 @@ class SinaraTester(EnvExperiment):
                     self.suschannels[name] = self.get_device(name)
                 elif (module, cls) == ("artiq.coredevice.almazny", "AlmaznyLegacy"):
                     self.almaznys[name] = self.get_device(name)
+                elif (module, cls) == ("artiq.coredevice.almazny", "AlmaznyChannel"):
+                    self.almaznychannels[name] = self.get_device(name)
 
         # Remove Urukul, Sampler, Zotino and Mirny control signals
         # from TTL outs (tested separately) and remove Urukuls covered by
@@ -148,6 +152,7 @@ class SinaraTester(EnvExperiment):
         self.mirnies = sorted(self.mirnies.items(), key=lambda x: (x[1].cpld.bus.channel, x[1].channel))
         self.suservos = sorted(self.suservos.items(), key=lambda x: x[1].channel)
         self.suschannels = sorted(self.suschannels.items(), key=lambda x: x[1].channel)
+        self.almaznychannels: list[str, AlmaznyChannel] = sorted(self.almaznychannels.items(), key=lambda x: x[1].channel)
 
     @kernel
     def test_led(self, led):
@@ -416,6 +421,40 @@ class SinaraTester(EnvExperiment):
             input()
             print("RF OFF. Press ENTER when done.")
             self.almazny_toggle_output(almazny, False)
+            input()
+
+        for name, almazny in sorted(self.almaznychannels.items(), key=lambda x: x[0]):
+            print(name + "...")
+            print("Initializing Mirny CPLDs...")
+            for name, cpld in sorted(self.mirny_cplds.items(), key=lambda x: x[0]):
+                print(name + "...")
+                self.init_mirny(cpld)
+            print("...done")
+
+            print("Testing attenuators. Frequencies:")
+            for card_n, channels in enumerate(chunker(self.mirnies, 4)):
+                for channel_n, (channel_name, channel_dev) in enumerate(channels):
+                    frequency = 2000 + card_n * 250 + channel_n * 50
+                    print("{}\t{}MHz".format(channel_name, frequency*2))
+                    self.setup_mirny(channel_dev, frequency)
+                    print("{} info: {}".format(channel_name, channel_dev.info()))
+            print("RF ON, all attenuators ON. Press ENTER when done.")
+            almazny.set(31.5, True, True)
+            input()
+            print("RF ON, half power attenuators ON. Press ENTER when done.")
+            almazny.set(15.5, True, True)
+            input()
+            print("RF ON, all attenuators OFF. Press ENTER when done.")
+            almazny.set(0, True, True)
+            input()
+            print("SR outputs are OFF. Press ENTER when done.")
+            almazny.set(0, False, False)
+            input()
+            print("RF ON, all attenuators are ON. Press ENTER when done.")
+            almazny.set(31.5, True, True)
+            input()
+            print("RF OFF. Press ENTER when done.")
+            almazny.set(31.5, False, False)
             input()
 
     def test_mirnies(self):
