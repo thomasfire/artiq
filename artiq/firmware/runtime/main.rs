@@ -205,9 +205,14 @@ fn startup() {
 
     let io = scheduler.io();
 
-    rtio_mgt::startup(&io, &aux_mutex, &drtio_routing_table, &up_destinations);
+    rtio_mgt::startup(&io, &aux_mutex, &drtio_routing_table, &up_destinations, &ddma_mutex, &subkernel_mutex);
 
-    io.spawn(4096, mgmt::thread);
+    {
+        let restart_idle = restart_idle.clone();
+        io.spawn(4096, move |io| { mgmt::thread(io, &restart_idle) });
+    }
+
+    
     {
         let aux_mutex = aux_mutex.clone();
         let drtio_routing_table = drtio_routing_table.clone();
