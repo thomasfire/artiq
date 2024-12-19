@@ -728,15 +728,18 @@ def decoded_dump_to_target(manager, devices, dump, uniform_interval):
         logger.warning("unable to determine DDS sysclk")
         dds_sysclk = 3e9  # guess
 
-    if isinstance(dump.messages[-1], StoppedMessage):
-        m = dump.messages[-1]
-        end_time = get_message_time(m)
-        manager.set_end_time(end_time)
-        messages = dump.messages[:-1]
-    else:
+    messages = sorted(dump.messages, key=get_message_time)
+    stopped_messages = list(filter(lambda x: isinstance(x, StoppedMessage), messages))
+    if len(stopped_messages) == 0:
         logger.warning("StoppedMessage missing")
-        messages = dump.messages
-    messages = sorted(messages, key=get_message_time)
+    elif len(stopped_messages) > 1:
+        logger.warning("multiple StoppedMessage found")
+
+    if len(stopped_messages) >= 1:
+        end_time = get_message_time(stopped_messages[-1])
+        manager.set_end_time(end_time)
+
+    messages = filter(lambda x: not isinstance(x, StoppedMessage), messages)
 
     channel_handlers = create_channel_handlers(
         manager, devices, ref_period,
