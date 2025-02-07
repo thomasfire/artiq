@@ -4,6 +4,7 @@
 extern crate cslice;
 extern crate unwind;
 extern crate libc;
+extern crate heapless;
 
 pub mod dwarf;
 pub mod eh_rust;

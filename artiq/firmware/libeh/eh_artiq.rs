@@ -1,5 +1,6 @@
 // ARTIQ Exception struct declaration
 use cslice::CSlice;
+use heapless::String;
 
 // Note: CSlice within an exception may not be actual cslice, they may be strings that exist only
 // in the host. If the length == usize:MAX, the pointer is actually a string key in the host.
@@ -11,8 +12,7 @@ pub struct Exception<'a> {
     pub line:     u32,
     pub column:   u32,
     pub function: CSlice<'a, u8>,
-    pub message:  CSlice<'a, u8>,
-    pub param:    [i64; 3]
+    pub message:  CSlice<'a, u8>
 }
 
 fn str_err(_: core::str::Utf8Error) -> core::fmt::Error {

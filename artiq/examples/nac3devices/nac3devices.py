@@ -2,7 +2,7 @@ from artiq.experiment import *
 from artiq.coredevice.core import Core
 from artiq.coredevice.cache import CoreCache
 from artiq.coredevice.kasli_i2c import KasliEEPROM
-from artiq.coredevice.zotino import Zotino
+#from artiq.coredevice.zotino import Zotino
 from artiq.coredevice.mirny import Mirny as MirnyCPLD
 from artiq.coredevice.almazny import AlmaznyChannel
 from artiq.coredevice.adf5356 import ADF5356
@@ -21,7 +21,7 @@ from artiq.coredevice.shuttler import DCBias as ShuttlerDCBias, DDS as ShuttlerD
 class NAC3Devices(EnvExperiment):
     core: KernelInvariant[Core]
     core_cache: KernelInvariant[CoreCache]
-    zotino0: KernelInvariant[Zotino]
+    #zotino0: KernelInvariant[Zotino]
     mirny0_cpld: KernelInvariant[MirnyCPLD]
     mirny0_ch0: KernelInvariant[ADF5356]
     mirny0_almazny0: KernelInvariant[AlmaznyChannel]
@@ -41,7 +41,7 @@ class NAC3Devices(EnvExperiment):
     def build(self):
         self.setattr_device("core")
         self.setattr_device("core_cache")
-        self.setattr_device("zotino0")
+        #self.setattr_device("zotino0")
         self.setattr_device("mirny0_cpld")
         self.setattr_device("mirny0_ch0")
         self.setattr_device("mirny0_almazny0")
@@ -61,9 +61,9 @@ class NAC3Devices(EnvExperiment):
     @kernel
     def run(self):
         self.core.reset()
-        self.zotino0.init()
-        self.zotino0.set_leds(0x15)
-        self.zotino0.set_dac([1.2, -5.3, 3.4, 4.5])
+        #self.zotino0.init()
+        #self.zotino0.set_leds(0x15)
+        #self.zotino0.set_dac([1.2, -5.3, 3.4, 4.5])
 
         self.core.break_realtime()
         self.mirny0_cpld.init()

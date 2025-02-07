@@ -5,6 +5,7 @@
 extern crate libc;
 extern crate unwind;
 extern crate cslice;
+extern crate heapless;
 
 extern crate eh;
 extern crate io;
@@ -14,7 +15,7 @@ extern crate board_artiq;
 extern crate proto_artiq;
 extern crate riscv;
 
-use core::{mem, ptr, slice, str, convert::TryFrom};
+use core::{mem, ptr, slice, str, convert::TryFrom, fmt::Write};
 use cslice::CSlice;
 use io::Cursor;
 use dyld::Library;
@@ -22,6 +23,7 @@ use board_artiq::{mailbox, rpc_queue};
 use proto_artiq::{kernel_proto, rpc_proto};
 use kernel_proto::*;
 use board_misoc::csr;
+use heapless::String;
 use riscv::register::{mcause, mepc, mtval};
 
 fn send(request: &Message) {
@@ -86,9 +88,13 @@ macro_rules! println {
 }
 
 macro_rules! raise {
-    ($name:expr, $message:expr, $param0:expr, $param1:expr, $param2:expr) => ({
+    ($name:expr, $message:expr, $($arg:expr),*) => ({
         use cslice::AsCSlice;
+        use heapless::String;
+        use core::fmt::Write;
         let name_id = $crate::eh_artiq::get_exception_id($name);
+        let mut message_buffer: String<128> = String::new();
+        write!(message_buffer, $message, $($arg),*);
         let exn = $crate::eh_artiq::Exception {
             id:       name_id,
             file:     file!().as_c_slice(),
@@ -96,14 +102,13 @@ macro_rules! raise {
             column:   column!(),
             // https://github.com/rust-lang/rfcs/pull/1719
             function: "(Rust function)".as_c_slice(),
-            message:  $message.as_c_slice(),
-            param:    [$param0, $param1, $param2]
+            message:  message_buffer.as_c_slice()
         };
         #[allow(unused_unsafe)]
         unsafe { $crate::eh_artiq::raise(&exn) }
     });
     ($name:expr, $message:expr) => ({
-        raise!($name, $message, 0, 0, 0)
+        raise!($name, $message, )
     });
 }
 
@@ -190,8 +195,7 @@ extern "C-unwind" fn rpc_recv(slot: *mut ()) -> usize {
                     line:     exception.line,
                     column:   exception.column,
                     function: exception.function,
-                    message:  exception.message,
-                    param:    exception.param
+                    message:  exception.message
                 })
             }
         }
@@ -416,13 +420,13 @@ extern "C-unwind" fn dma_playback(timestamp: i64, ptr: i32, _uses_ddma: bool) {
             csr::rtio_dma::error_write(1);
             if error & 1 != 0 {
                 raise!("RTIOUnderflow",
-                    "RTIO underflow at channel {rtio_channel_info:0}, {1} mu",
-                    channel as i64, timestamp as i64, 0);
+                    "RTIO underflow at channel {0}, {1} mu",
+                    channel as i64, timestamp as i64);
             }
             if error & 2 != 0 {
                 raise!("RTIODestinationUnreachable",
-                    "RTIO destination unreachable, output, at channel {rtio_channel_info:0}, {1} mu",
-                    channel as i64, timestamp as i64, 0);
+                    "RTIO destination unreachable, output, at channel {0}, {1} mu",
+                    channel as i64, timestamp as i64);
             }
         }
     }
@@ -437,13 +441,13 @@ extern "C-unwind" fn dma_playback(timestamp: i64, ptr: i32, _uses_ddma: bool) {
             }
             if error & 1 != 0 {
                 raise!("RTIOUnderflow",
-                    "RTIO underflow at channel {rtio_channel_info:0}, {1} mu",
-                    channel as i64, timestamp as i64, 0);
+                    "RTIO underflow at channel {0}, {1} mu",
+                    channel as i64, timestamp as i64);
             }
             if error & 2 != 0 {
                 raise!("RTIODestinationUnreachable",
-                    "RTIO destination unreachable, output, at channel {rtio_channel_info:0}, {1} mu",
-                    channel as i64, timestamp as i64, 0);
+                    "RTIO destination unreachable, output, at channel {0}, {1} mu",
+                    channel as i64, timestamp as i64);
             }
         });
     }
@@ -468,13 +472,13 @@ extern "C-unwind" fn dma_playback(timestamp: i64, ptr: i32, _uses_ddma: bool) {
         }
         if error & 1 != 0 {
             raise!("RTIOUnderflow",
-                "RTIO underflow at channel {rtio_channel_info:0}, {1} mu",
-                channel as i64, timestamp as i64, 0);
+                "RTIO underflow at channel {0}, {1} mu",
+                channel as i64, timestamp as i64);
         }
         if error & 2 != 0 {
             raise!("RTIODestinationUnreachable",
-                "RTIO destination unreachable, output, at channel {rtio_channel_info:0}, {1} mu",
-                channel as i64, timestamp as i64, 0);
+                "RTIO destination unreachable, output, at channel {0}, {1} mu",
+                channel as i64, timestamp as i64);
         }
     });
 }

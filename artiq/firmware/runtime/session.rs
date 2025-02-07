@@ -422,7 +422,7 @@ fn process_host_message(io: &Io, _aux_mutex: &Mutex, _ddma_mutex: &Mutex, _subke
         }
 
         host::Request::RpcException {
-            id, message, param, file, line, column, function
+            id, message, file, line, column, function
         } => {
             if session.kernel_state != KernelState::RpcWait {
                 unexpected!("unsolicited RPC reply")
@@ -440,7 +440,6 @@ fn process_host_message(io: &Io, _aux_mutex: &Mutex, _ddma_mutex: &Mutex, _subke
                 let exn = eh::eh_artiq::Exception {
                     id:       id,
                     message:  CSlice::new(message as *const u8, usize::MAX),
-                    param:    param,
                     file:     CSlice::new(file as *const u8, usize::MAX),
                     line:     line,
                     column:   column,

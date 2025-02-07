@@ -14,6 +14,7 @@ use core::mem;
 use cslice::AsCSlice;
 use unwind as uw;
 use libc::{c_int, c_void};
+use heapless::String;
 
 use eh::{self, dwarf::{self, EHAction, EHContext}};
 
@@ -205,8 +206,7 @@ pub unsafe extern "C-unwind" fn raise(exception: *const Exception) -> ! {
                 column:   column!(),
                 // https://github.com/rust-lang/rfcs/pull/1719
                 function: "__artiq_raise".as_c_slice(),
-                message:  "too many nested exceptions".as_c_slice(),
-                param:    [0, 0, 0]
+                message:  "too many nested exceptions".as_c_slice()
             };
             EXCEPTION_BUFFER.exceptions[MAX_INFLIGHT_EXCEPTIONS] = Some(mem::transmute(exception));
             EXCEPTION_BUFFER.stack_pointers[MAX_INFLIGHT_EXCEPTIONS] = Default::default();
@@ -383,8 +383,7 @@ pub extern "C-unwind" fn test_exception_id_sync(exn_id: u32) {
         line:     0,
         column:   0,
         function: "test_exception_id_sync".as_c_slice(),
-        message:  message.as_c_slice(),
-        param:    [0, 0, 0]
+        message:  message.as_c_slice()
     };
     unsafe { raise(&exn) };
 }

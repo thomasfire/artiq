@@ -377,6 +377,7 @@ class HostVsDeviceCase(ExperimentCase):
         _run_on_host(_NestedExceptions, trace=t_host)
         self.assertEqual(t_device, t_host)
 
+    #@unittest.skip("skip for now")
     def test_rpc_exceptions(self):
         for f in self.execute, _run_on_host:
             with self.assertRaises(_MyException):

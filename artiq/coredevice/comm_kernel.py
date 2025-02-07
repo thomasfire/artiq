@@ -205,7 +205,6 @@ class CoreException:
         else:
             self.id, self.name = 0, name
         self.message = first_exception[1]
-        self.params = first_exception[2]
 
     def append_backtrace(self, record, inlined=False):
         filename, line, column, function, address = record
@@ -246,14 +245,13 @@ class CoreException:
         exception = self.exceptions[exception_index]
         name = exception[0]
         message = exception[1]
-        params = exception[2]
         if ':' in name:
             exn_id, name = name.split(':', 2)
             exn_id = int(exn_id)
         else:
             exn_id = 0
-        lines.append("{}({}): {}".format(name, exn_id, message.format(*params)))
-        zipped.append(((exception[3], exception[4], exception[5], exception[6],
+        lines.append("{}({}): {}".format(name, exn_id, message))
+        zipped.append(((exception[2], exception[3], exception[4], exception[5],
                        None, []), None))
 
         for ((filename, line, column, function, address, inlined), sp) in zipped:
@@ -730,8 +728,6 @@ class CommKernel:
                 exn = exn.artiq_core_exception
                 self._write_int32(embedding_map.store_str(exn.name))
                 self._write_int32(embedding_map.store_str(self._truncate_message(exn.message)))
-                for index in range(3):
-                    self._write_int64(exn.param[index])
 
                 filename, line, column, function = exn.traceback[-1]
                 self._write_int32(embedding_map.store_str(filename))
@@ -751,8 +747,6 @@ class CommKernel:
                                              exn_type.__qualname__)
                 self._write_int32(embedding_map.store_str(name))
                 self._write_int32(embedding_map.store_str(self._truncate_message(str(exn))))
-                for index in range(3):
-                    self._write_int64(0)
 
                 tb = traceback.extract_tb(exn.__traceback__, 2)
                 if len(tb) == 2:
@@ -790,13 +784,12 @@ class CommKernel:
         for _ in range(exception_count):
             name = embedding_map.retrieve_str(self._read_int32())
             message = read_exception_string()
-            params = [self._read_int64() for _ in range(3)]
 
             filename = read_exception_string()
             line = self._read_int32()
             column = self._read_int32()
             function = read_exception_string()
-            nested_exceptions.append([name, message, params,
+            nested_exceptions.append([name, message,
                                       filename, line, column, function])
 
         exception_info = []
@@ -825,7 +818,7 @@ class CommKernel:
 
         try:
             python_exn = python_exn_type(
-                nested_exceptions[-1][1].format(*nested_exceptions[0][2]))
+                nested_exceptions[-1][1])
         except Exception as ex:
             python_exn = RuntimeError(
                 f"Exception type={python_exn_type}, which couldn't be "

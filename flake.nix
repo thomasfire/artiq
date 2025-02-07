@@ -3,8 +3,7 @@
 
   inputs = {
     nac3 = {
-      url = "https://git.m-labs.hk/m-labs/nac3.git";
-      type = "git";
+      url = "/home/esavkin/CLionProjects/nac3/";
     };
 
     rust-overlay = {
