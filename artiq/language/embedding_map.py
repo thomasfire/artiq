@@ -26,6 +26,7 @@ class EmbeddingMap:
         key = len(self.string_map)
         self.string_map[key] = s
         self.string_reverse_map[s] = key
+        print(key, s)
         return key
 
     def retrieve_function(self, key):

@@ -90,11 +90,10 @@ macro_rules! println {
 macro_rules! raise {
     ($name:expr, $message:expr, $($arg:expr),*) => ({
         use cslice::AsCSlice;
-        use heapless::String;
         use core::fmt::Write;
         let name_id = $crate::eh_artiq::get_exception_id($name);
-        let mut message_buffer: String<128> = String::new();
-        write!(message_buffer, $message, $($arg),*);
+        let mut message_buffer = eh::eh_artiq::StringBuffer::new();
+        write!(&mut message_buffer, $message, $($arg),*);
         let exn = $crate::eh_artiq::Exception {
             id:       name_id,
             file:     file!().as_c_slice(),
@@ -102,7 +101,7 @@ macro_rules! raise {
             column:   column!(),
             // https://github.com/rust-lang/rfcs/pull/1719
             function: "(Rust function)".as_c_slice(),
-            message:  message_buffer.as_c_slice()
+            message:  message_buffer
         };
         #[allow(unused_unsafe)]
         unsafe { $crate::eh_artiq::raise(&exn) }
