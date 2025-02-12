@@ -777,7 +777,9 @@ class CommKernel:
             # note: if length == -1, the following int32 is the object key
             length = self._read_int32()
             if length == -1:
-                return embedding_map.retrieve_str(self._read_int32())
+                val = self._read_int32()
+                print(val)
+                return embedding_map.retrieve_str(val)
             else:
                 return self._read(length).decode("utf-8")
 

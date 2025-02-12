@@ -436,10 +436,16 @@ fn process_host_message(io: &Io, _aux_mutex: &Mutex, _ddma_mutex: &Mutex, _subke
                 }
             })?;
 
+            debug!("{}", message);
+            let host_msg = eh::eh_artiq::StringBuffer::from_host(message);
+            for x in 0..4 {
+                debug!("{} -> {}", x, host_msg.buf[x]);
+            }
+
             unsafe {
                 let exn = eh::eh_artiq::Exception {
                     id:       id,
-                    message:  CSlice::new(message as *const u8, usize::MAX),
+                    message:  host_msg,
                     file:     CSlice::new(file as *const u8, usize::MAX),
                     line:     line,
                     column:   column,

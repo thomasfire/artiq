@@ -1,7 +1,8 @@
 use core::{str, str::Utf8Error, slice};
 use alloc::{vec::Vec, format, collections::BTreeMap, string::String};
-use eh::eh_artiq::{Exception, StackPointerBacktrace};
+use eh::eh_artiq::{Exception, StackPointerBacktrace, StringBuffer};
 use cslice::CSlice;
+use cslice::AsCSlice;
 
 use io::{Read, ProtoRead, Write, ProtoWrite, Error as IoError, ReadStringError};
 
@@ -158,6 +159,26 @@ fn write_exception_string<'a, W>(writer: &mut W, s: &CSlice<'a, u8>) -> Result<(
     Ok(())
 }
 
+fn write_exception_stringbuffer<'a, W>(writer: &mut W, s: &StringBuffer) -> Result<(), IoError<W::WriteError>>
+    where W: Write + ?Sized
+{
+    use core::convert::TryInto;
+    if s.is_host() {
+        writer.write_u32(u32::MAX)?;
+
+        let bytes: &[u8] = &s.buf[0..4];
+        let byte_array: [u8; 4] = bytes.try_into().expect("Slice must have exactly 4 bytes");
+        let value = unsafe { core::mem::transmute::<[u8; 4], u32>(byte_array) };
+        debug!("value: {}", value);
+        writer.write_u32(value)?;
+        //writer.write_u32(unsafe { core::mem::transmute::<[u8; 4], u32>(core::slice::from_raw_parts(s.as_ptr(), 4)) })?;
+    } else {
+        debug!("write_string_buffer {}", s.pos);
+        writer.write_string(s.as_str())?;
+    }
+    Ok(())
+}
+
 impl<'a> Reply<'a> {
     pub fn write_to<W>(&self, writer: &mut W) -> Result<(), IoError<W::WriteError>>
         where W: Write + ?Sized
@@ -197,7 +218,7 @@ impl<'a> Reply<'a> {
                 for exception in exceptions.iter() {
                     let exception = exception.as_ref().unwrap();
                     writer.write_u32(exception.id as u32)?;
-                    write_exception_string(writer, &exception.message)?;
+                    write_exception_stringbuffer(writer, &exception.message)?;
                     write_exception_string(writer, &exception.file)?;
                     writer.write_u32(exception.line)?;
                     writer.write_u32(exception.column)?;
