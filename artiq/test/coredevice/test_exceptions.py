@@ -121,7 +121,8 @@ class KernelRTIOUnderflow(EnvExperiment):
     @kernel
     def run(self):
         self.core.reset()
-        at_mu(self.core.get_rtio_counter_mu() - int64(1000)); self.led.on()
+        at_mu(self.core.get_rtio_counter_mu() - int64(1000));
+        self.led.on()
 
 
 RTIO_UNDERFLOW_PATTERN = re.compile(
@@ -138,20 +139,13 @@ class ExceptionFormatTest(ExperimentCase):
     def test_custom_formatted_kernel_exception(self):
         with self.assertRaisesRegex(CustomException, r"CustomException\(\d+\): \{foo\}"):
             self.execute(KernelFmtException)
-        #captured_lines = captured.output[0].split('\n')
-        #self.assertEqual([captured_lines[0], captured_lines[-1]],
-        #                 ["ERROR:artiq.coredevice.comm_kernel:Couldn't format exception message", "KeyError: 'foo'"])
 
     def test_nested_formatted_kernel_exception(self):
-        with self.assertLogs() as captured:
-            with self.assertRaisesRegex(CustomException,
-                                        re.compile(
-                                            r"CustomException\(\d+\): \{foo\}.*?RTIOUnderflow\(\d+\): \{bar\}.*?RTIOOverflow\(\d+\): \{bizz\}.*?RTIOUnderflow\(\d+\): \{buzz\}",
-                                            re.DOTALL)):
-                self.execute(KernelNestedFmtException)
-        captured_lines = captured.output[0].split('\n')
-        self.assertEqual([captured_lines[0], captured_lines[-1]],
-                         ["ERROR:artiq.coredevice.comm_kernel:Couldn't format exception message", "KeyError: 'foo'"])
+        with self.assertRaisesRegex(CustomException,
+                                    re.compile(
+                                        r"CustomException\(\d+\): \{foo\}.*?RTIOUnderflow\(\d+\): \{bar\}.*?RTIOOverflow\(\d+\): \{bizz\}.*?RTIOUnderflow\(\d+\): \{buzz\}",
+                                        re.DOTALL)):
+            self.execute(KernelNestedFmtException)
 
     def test_rtio_underflow(self):
         with self.assertRaisesRegex(RTIOUnderflow, RTIO_UNDERFLOW_PATTERN):

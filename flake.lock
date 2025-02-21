@@ -48,17 +48,17 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1739934797,
-        "narHash": "sha256-DMiO91bEOhrS6hqWcfgt/ooyQEwPqGzb1gwsV8BGJnE=",
-        "ref": "refs/heads/566-format-exception-message",
-        "rev": "00112562f5b8dd3fb8de76b1ce05c6d58e5c9d44",
-        "revCount": 1522,
+        "lastModified": 1738741343,
+        "narHash": "sha256-YwMpJaMXTfqym/8kgMUjmcbZd5JXakdwPfycWxaryUw=",
+        "ref": "refs/heads/master",
+        "rev": "c32c68b0b0823a21a4528262321dc4c1ebc4fde4",
+        "revCount": 1521,
         "type": "git",
-        "url": "file:///home/esavkin/CLionProjects/nac3"
+        "url": "https://git.m-labs.hk/m-labs/nac3.git"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/esavkin/CLionProjects/nac3"
+        "url": "https://git.m-labs.hk/m-labs/nac3.git"
       }
     },
     "nixpkgs": {

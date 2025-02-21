@@ -62,7 +62,11 @@ impl StringBuffer {
     }
 
     pub fn is_host(&self) -> bool {
-        self.pos >= 128
+        self.pos == usize::MAX
+    }
+
+    pub fn is_kernel(&self) -> bool {
+        self.pos < usize::MAX && self.pos >= 128
     }
 }
 

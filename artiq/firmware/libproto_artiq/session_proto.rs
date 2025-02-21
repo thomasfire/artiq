@@ -172,6 +172,13 @@ fn write_exception_stringbuffer<'a, W>(writer: &mut W, s: &StringBuffer) -> Resu
         debug!("value: {}", value);
         writer.write_u32(value)?;
         //writer.write_u32(unsafe { core::mem::transmute::<[u8; 4], u32>(core::slice::from_raw_parts(s.as_ptr(), 4)) })?;
+    } else if s.is_kernel() {
+        let bytes: &[u8] = &s.buf[0..4];
+        let byte_array: [u8; 4] = bytes.try_into().expect("Slice must have exactly 4 bytes");
+        let size = unsafe { core::mem::transmute::<[u8; 4], u32>(byte_array) };
+
+        let ptr = unsafe{CSlice::new(s.pos as *const u8, size as usize)};
+        writer.write_string(core::str::from_utf8(ptr.as_ref()).unwrap())?;
     } else {
         debug!("write_string_buffer {}", s.pos);
         writer.write_string(s.as_str())?;
