@@ -1,8 +1,7 @@
 // ARTIQ Exception struct declaration
 use cslice::CSlice;
 use cslice::{AsCSlice};
-use heapless;
-use core::{mem, str, slice};
+use core::{mem, str, slice, fmt};
 
 #[repr(C)]
 #[derive(Copy, Clone)]

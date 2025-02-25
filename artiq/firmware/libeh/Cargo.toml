@@ -11,5 +11,4 @@ path = "lib.rs"
 cslice = { version = "0.3" }
 libc = { path = "../libc" }
 unwind = { path = "../libunwind" }
-heapless = "0.7.17"
 lock_api = "=0.4.11"
